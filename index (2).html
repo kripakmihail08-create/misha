@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TON Duel</title>
+<style>
+:root{--bg:#0b0b0c;--card:#17171a;--line:#2a2a2f;--tx:#f4f1ee;--mut:#8d8a86;--or:#ff7a1a;--or2:#ffb020;--ice:#3fc8ee;--fire:#ff5a1f;--ok:#4ade80;--bad:#f87171;--pu:#8b6cf0}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+body{display:flex;flex-direction:column;max-width:480px;margin:0 auto;padding-top:env(safe-area-inset-top,0px)}
+button{font-family:inherit;cursor:pointer}
+#main{flex:1;overflow-y:auto;padding:12px 14px}
+.logo{font-weight:800;font-size:20px}.logo b{color:var(--or)}
+.ice{color:var(--ice)}.fire{color:var(--fire)}
+button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--or2)}
+.page{display:none}.page.on{display:block}
+/* шапка главной */
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.avw{position:relative;flex:none}
+.av{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#26262b;font-style:normal;font-size:13px;font-weight:800;flex:none;color:#fff}
+.av.lg{width:48px;height:48px;font-size:24px}.av.xl{width:58px;height:58px;font-size:28px;border:2px solid var(--pu)}
+.bdg{position:absolute;bottom:-3px;width:22px;height:22px;border-radius:50%;background:#1b1b1f;border:2px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px}
+.hb{flex:1;min-width:0}.hb small{color:var(--mut);font-size:12px;display:block}.hb b{font-size:22px}
+.dep{background:linear-gradient(135deg,#8d72f2,#6a55d6);border:0;border-radius:16px;color:#fff;font-weight:800;font-size:15px;padding:13px 16px}
+/* Live */
+.livebar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.lv{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px;flex:none}
+.lv i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.lvl{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;flex:1;padding:2px 0}.lvl::-webkit-scrollbar{display:none}
+.lc{flex:none;width:64px;height:70px;border-radius:14px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid #ffffff22}
+.lc.duel{background:linear-gradient(160deg,#c8660f,#f0a830)}.lc.rk{background:linear-gradient(160deg,#1c6fd6,#38b7c8)}.lc.up{background:linear-gradient(160deg,#6a3fd0,#c95ad6)}
+.lc .li{font-size:28px;line-height:1}.lc small{font-size:11px;font-weight:800;color:#fff;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 2px #0008}
+.lc .av{position:absolute;top:-6px;right:-6px;width:20px;height:20px;font-size:10px;border:2px solid var(--bg)}
+.lc.new{animation:pop .5s}@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.lempty{color:var(--mut);font-size:13px;padding:8px}
+/* плитки игр */
+.tile{position:relative;overflow:hidden;border-radius:22px;height:150px;margin-bottom:12px;padding:16px;cursor:pointer;border:0;width:100%;text-align:left;color:#fff;display:block}
+.tile h2{position:absolute;left:16px;bottom:14px;font-size:24px;font-weight:800;letter-spacing:.5px;text-shadow:0 2px 6px #0006}
+.tile .tag{display:inline-block;background:#fff;color:#e8590c;font-weight:800;font-size:13px;border-radius:12px;padding:5px 11px}
+.tile .art{position:absolute;right:10px;top:8px;font-size:84px;line-height:1;filter:drop-shadow(0 6px 10px #0005)}
+.tile .ch1{position:absolute;background:#1fc16b;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:800;transform:rotate(-12deg)}
+.t-rk{background:linear-gradient(120deg,#4a90e2,#8fc4f4)}.t-duel{background:linear-gradient(120deg,#f5a21a,#ffc94d)}.t-up{background:linear-gradient(120deg,#4a2a9c,#8a3fd6)}
+.t-rk .ch1{right:20px;bottom:28px}.t-up .tag{color:#6a3fd0}
+/* верхняя панель игры */
+.gbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.gb{background:#1b1b1f;border:1px solid var(--line);color:var(--tx);border-radius:20px;padding:10px 14px;font-weight:800;font-size:14px}
+.gt{font-size:17px}
+.chip{background:#1b1b1f;border:1px solid var(--line);border-radius:16px;padding:9px 14px;font-weight:800;font-size:16px;color:var(--or2);white-space:nowrap}
+/* дуэль */
+.vs{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px}
+.vs div{display:flex;flex-direction:column}.vs .r{text-align:right}.vs .n{font-size:26px;font-weight:800}.vs .m{font-weight:800;color:var(--mut)}
+.vs .n::after{content:' TON';font-size:12px;color:var(--mut);font-weight:700}
+.field{position:relative;margin:12px 0;display:flex;justify-content:center}
+canvas{width:100%;max-width:340px}
+#c{aspect-ratio:1}
+.st{position:absolute;top:6px;background:#000c;border:1px solid var(--line);padding:6px 14px;border-radius:20px;font-weight:700;font-size:14px}
+.pl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px 12px;max-height:130px;overflow:auto}
+.pl div{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;border-bottom:1px solid #202024}.pl div:last-child{border:0}
+.ctl{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin-top:12px}
+.inp{display:flex;gap:8px;align-items:center}
+.inp input{flex:1;background:#0f0f11;border:1px solid var(--line);border-radius:12px;color:var(--tx);font-size:20px;font-weight:800;padding:10px;text-align:center;min-width:0}
+.q{background:#222226;border:0;color:var(--tx);border-radius:10px;padding:10px 9px;font-weight:700}
+.btns{display:flex;gap:10px;margin-top:10px}
+.btns button{flex:1;border:0;border-radius:14px;padding:16px;font-size:17px;font-weight:800;color:#fff}
+.bi{background:linear-gradient(135deg,#1fb7dd,#0f5f86)}.bf{background:linear-gradient(135deg,#c53a0c,#ff9a3c)}
+.link{background:0;border:0;color:var(--or);font-weight:800;font-size:14px;margin-top:10px;padding:6px 0;width:100%;text-align:center}
+/* ракетка */
+.rkbox{position:relative;background:radial-gradient(ellipse at 50% 30%,#15162b,#08080f);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;justify-content:center}
+#rkc{aspect-ratio:340/220}
+.rkx{position:absolute;left:0;right:0;top:12px;text-align:center;font-size:40px;font-weight:800;text-shadow:0 2px 12px #000}
+.rkx.crash{color:var(--bad)}.rkx.fly{color:var(--ok)}
+.rks{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:14px;font-weight:700;color:#cfd2ff}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:12px 0}.chips::-webkit-scrollbar{display:none}
+.cx{flex:none;border-radius:12px;padding:8px 12px;font-weight:800;font-size:14px;border:2px solid;background:#12141f}
+.cx.gr{border-color:#26c46a;color:#d6ffe6}.cx.bl{border-color:#3d74d6;color:#d4e4ff}.cx.pu{border-color:#8b6cf0;color:#e4dcff}.cx.gd{border-color:#e8a317;color:#ffe9b0}
+.main-btn{width:100%;border:0;border-radius:16px;padding:18px;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(135deg,#1fa5e6,#2f5ee6);margin-top:10px}
+.main-btn.cash{background:linear-gradient(135deg,#1fc16b,#0f9a8a)}
+.row2{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;color:var(--mut)}.row2 input{flex:1;min-width:0}
+.plist{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:10px;margin-top:12px}
+.rowp{display:flex;align-items:center;gap:10px;background:#1a2528;border:1px solid #2b4147;border-radius:14px;padding:9px 10px;margin-bottom:8px}.rowp:last-child{margin-bottom:0}
+.rowp .nm{flex:1;min-width:0;font-weight:700;font-size:14px}.rowp .nm span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rowp .nm small{display:inline-block;background:#122;border-radius:8px;padding:2px 7px;color:#7fd6f2;font-size:12px;margin-top:3px}
+.rowp .rv{font-weight:800;font-size:14px;color:#7fd6f2;white-space:nowrap}.rowp .rv.w{color:var(--ok)}.rowp .rv.l{color:var(--bad)}
+.rowp .av{width:38px;height:38px;font-size:18px;border-radius:10px}
+/* UpGift */
+.upwrap{background:radial-gradient(ellipse at 50% 40%,#2a1c0e,#120d08);border-radius:22px;padding:16px 10px 18px;border:1px solid #3a2a18}
+.uplay{position:relative;width:270px;height:290px;margin:0 auto}
+.ptr{position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:26px;color:var(--or2);z-index:3;filter:drop-shadow(0 0 6px #ff9a1a)}
+.wheel{position:absolute;left:5px;top:28px;width:260px;height:260px;border-radius:50%;background:#2b1c10;border:2px solid #4a3416;box-shadow:0 0 30px #ff8a0022 inset}
+.wheel::before{content:'';position:absolute;inset:34px;border-radius:50%;background:#17110b;border:2px solid #5a4018}
+.wcent{position:absolute;left:5px;top:28px;width:260px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;pointer-events:none}
+.wcent .chv{font-size:54px;color:#b8800f;line-height:1;font-weight:800}.wcent b{font-size:30px;color:var(--or2)}.wcent small{color:var(--mut);font-size:12px;font-weight:700}
+.uppan{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.upc{background:#2a1d12;border:1px solid #3d2b19;border-radius:18px;padding:12px;color:var(--tx);text-align:left}
+.upc h4{font-size:13px;font-weight:800;line-height:1.25;margin-bottom:10px;text-transform:uppercase}
+.slot{background:#1b130c;border-radius:12px;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#6f6252;font-weight:700;font-size:13px;gap:6px;padding:6px}
+.slot .big{font-size:38px}.slot b{color:var(--tx)}
+.upgo{width:100%;margin-top:14px;border:0;border-radius:16px;padding:17px;font-size:18px;font-weight:800;color:#2a1600;background:linear-gradient(135deg,#ffb020,#ff7a1a)}
+.pk{display:flex;align-items:center;gap:10px;background:#0f0f11;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;font-size:14px;font-weight:700}
+.pk input[type=checkbox]{width:20px;height:20px;accent-color:var(--or)}.pk span{flex:1}.pk em{font-style:normal;color:var(--or2)}
+.pk.dis{opacity:.4}
+/* прочее */
+.row{display:flex;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--or);color:#000;font-weight:800;padding:12px 20px;border-radius:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99;text-align:center;max-width:90%}
+#toast.on{opacity:1}
+nav{display:flex;border-top:1px solid var(--line);background:#101012;padding:6px 8px max(6px,env(safe-area-inset-bottom,0px));gap:6px}
+nav button{flex:1;background:0;border:0;color:var(--mut);padding:7px 2px;font-size:11px;font-weight:700;line-height:1.15;border-radius:16px}
+nav button span{display:block;font-size:21px;margin-bottom:1px}nav button.on{color:#fff;background:#6a55d6}
+.h1{font-weight:800;font-size:20px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h3{font-size:14px;color:var(--mut);margin-bottom:8px;font-weight:700}
+.card p{font-size:13px;color:var(--mut);line-height:1.45;margin-top:8px}
+.big{font-size:30px;font-weight:800;color:var(--or2)}
+.who{display:flex;gap:12px;align-items:center;margin-bottom:10px}.who b{font-size:17px;display:block}
+.badge{display:inline-block;background:#2a1a08;border:1px solid var(--or);color:var(--or2);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:800;margin-top:3px}
+.stats{display:flex;gap:8px;margin-top:10px}.stats div{flex:1;background:#0f0f11;border-radius:10px;padding:8px;text-align:center;font-size:12px;color:var(--mut)}.stats b{display:block;font-size:16px;color:var(--tx)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.act{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 8px;color:var(--tx);font-weight:800;font-size:14px}
+.act span{display:block;font-size:20px;margin-bottom:3px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}
+.tabs button{flex:1;white-space:nowrap;background:var(--card);border:1px solid var(--line);color:var(--mut);border-radius:12px;padding:10px 8px;font-size:13px;font-weight:800}
+.tabs button.on{background:var(--or);border-color:var(--or);color:#000}
+.sub{display:none}.sub.on{display:block}
+.pr{display:flex;gap:8px}
+.fi{flex:1;min-width:0;background:#0f0f11;border:1px solid var(--line);border-radius:12px;color:var(--tx);font-size:16px;font-weight:700;padding:11px;width:100%;font-family:inherit}
+textarea.fi{resize:none;height:90px;font-weight:600}
+.ok{background:linear-gradient(135deg,var(--or),var(--or2));border:0;border-radius:12px;color:#000;font-weight:800;padding:11px 16px}
+.ghost{background:#222226;border:0;border-radius:10px;color:var(--tx);font-weight:800;padding:9px 12px;font-size:13px}
+.hr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #202024;font-size:13px}.hr:last-child{border:0}
+.hr small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
+.pos{color:var(--ok);font-weight:800;white-space:nowrap}.neg{color:var(--bad);font-weight:800;white-space:nowrap}.neu{color:var(--mut);font-weight:800;white-space:nowrap}
+.bar{height:6px;background:#0f0f11;border-radius:4px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--or)}
+.mono{font-family:monospace;word-break:break-all;font-size:12px;color:var(--or2);background:#0f0f11;border-radius:10px;padding:10px;margin:6px 0}
+.empty{color:var(--mut);text-align:center;padding:12px;font-size:14px}
+.seg{display:flex;gap:6px}.seg button{flex:1;background:#222226;border:1px solid transparent;color:var(--tx);border-radius:10px;padding:9px;font-weight:800}.seg button.on{border-color:var(--or);color:var(--or2)}
+.sw{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sw label{position:relative;width:52px;height:30px;flex:none}.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#2a2a2f;border-radius:30px;transition:.2s}
+.sw span::before{content:'';position:absolute;width:24px;height:24px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}
+.sw input:checked+span{background:var(--or)}.sw input:checked+span::before{transform:translateX(22px)}
+.rank{padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:#0f0f11}
+.rank.cur{border-color:var(--or)}.rank.lock{opacity:.7}
+.rank b{font-size:15px}.rank small{color:var(--mut);display:block;font-size:12px}
+.rank ul{margin:6px 0 0 18px;font-size:12px;color:var(--mut);line-height:1.5}
+.rd{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.rd .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+.rd .no{font-weight:800;font-size:16px}
+.wb{border-radius:20px;padding:3px 10px;font-size:12px;font-weight:800;background:#0f0f11;border:1px solid currentColor;white-space:nowrap}
+.mt{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12px;color:var(--mut)}
+.rdx{display:none;margin-top:10px;border-top:1px solid #202024;padding-top:10px}.rd.open .rdx{display:block}
+.ch{display:flex;height:8px;border-radius:5px;overflow:hidden;margin:6px 0 4px}.ch i{display:block}
+.chl{display:flex;justify-content:space-between;font-size:12px;font-weight:800}
+.rdx h4{font-size:12px;color:var(--mut);margin:12px 0 2px;font-weight:700}
+.pw{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px}.pw .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pw small{display:block;color:var(--mut);font-size:11px}
+.me{color:var(--or2)}
+.sheet{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:50}.sheet.on{display:flex}
+.sh-box{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom,0px));width:100%;max-width:480px;position:relative;max-height:85vh;overflow:auto}
+.sh-x{position:absolute;right:12px;top:10px;background:0;border:0;color:var(--mut);font-size:20px}
+.sh-box h3{font-size:16px;color:var(--tx);margin-bottom:12px}
+.sh-box .fi{margin-bottom:8px}
+.res{text-align:center;padding:10px 0}.res .big{font-size:64px;color:inherit}.res h3{font-size:20px;margin:8px 0}
+</style></head><body>
+<div id="main">
+
+<!-- ГЛАВНАЯ -->
+<div class="page on" id="p-home">
+ <div class="hdr">
+  <div class="avw"><span id="hav"></span><span class="bdg" id="hanon" style="left:-4px;display:none">🕶️</span><span class="bdg" style="right:-4px">💎</span></div>
+  <div class="hb"><small data-i="your_bal"></small><b>💎 <span class="balv">0.00</span></b></div>
+  <button class="dep" data-act="dep" data-i="deposit"></button>
+ </div>
+ <div class="livebar"><div class="lv"><i></i>Live</div><div class="lvl" id="live"></div></div>
+ <button class="tile t-rk" data-act="go" data-p="rk"><span class="tag">🔥 <span data-i="hit"></span></span><span class="art">🚀</span><span class="ch1">x7.04</span><h2>🚀 РАКЕТКА</h2></button>
+ <button class="tile t-duel" data-act="go" data-p="duel"><span class="tag">⚡ NEW</span><span class="art">❄️🔥</span><h2>⚔️ PVP HUB</h2></button>
+ <button class="tile t-up" data-act="go" data-p="up"><span class="tag">⬆️ UP</span><span class="art">🎁</span><h2>🎮 PLAY UP</h2></button>
+</div>
+
+<!-- DUEL -->
+<div class="page" id="p-duel">
+ <div class="gbar"><button class="gb" data-act="go" data-p="home" data-i="back"></button><b class="gt">⚔️ PVP HUB</b><div class="chip">💎 <span class="balv">0.00</span></div></div>
+ <div class="vs"><div><small class="ice">❄ Ice</small><span class="n" id="pi">0.00</span></div><span class="m">VS</span><div class="r"><small class="fire">Fire 🔥</small><span class="n" id="pf">0.00</span></div></div>
+ <div class="field"><canvas id="c"></canvas><div class="st" id="st">…</div></div>
+ <div class="pl" id="pl"></div>
+ <div class="ctl">
+  <div class="inp"><button class="q" data-t="amt" data-v="0.1">0.1</button><button class="q" data-t="amt" data-v="1">1</button><button class="q" data-t="amt" data-v="5">5</button><input id="amt" type="number" inputmode="decimal" value="1" min="0.1" step="0.1" data-al="amt_label"><button class="q" data-t="amt" data-v="max">MAX</button></div>
+  <div class="btns"><button class="bi" id="bi" data-i="bet_ice"></button><button class="bf" id="bf" data-i="bet_fire"></button></div>
+ </div>
+ <button class="link" data-act="go" data-p="hist" data-i="open_hist"></button>
+</div>
+
+<div class="page" id="p-hist"><div class="gbar"><button class="gb" data-act="go" data-p="duel" data-i="back"></button><b class="gt" data-i="hist_title"></b><span></span></div><div id="rdl"></div></div>
+
+<!-- РАКЕТКА -->
+<div class="page" id="p-rk">
+ <div class="gbar"><button class="gb" data-act="go" data-p="home" data-i="back"></button><b class="gt">🚀 РАКЕТКА</b><div class="chip">💎 <span class="balv">0.00</span></div></div>
+ <div class="rkbox"><canvas id="rkc"></canvas><div class="rkx" id="rkx">1.00x</div><div class="rks" id="rks"></div></div>
+ <div class="chips" id="rkh"></div>
+ <div class="ctl" style="margin-top:0">
+  <div class="inp"><button class="q" data-t="ramt" data-v="0.1">0.1</button><button class="q" data-t="ramt" data-v="1">1</button><button class="q" data-t="ramt" data-v="5">5</button><input id="ramt" type="number" inputmode="decimal" value="1" min="0.1" step="0.1" data-al="amt_label"><button class="q" data-t="ramt" data-v="max">MAX</button></div>
+  <div class="row2"><span data-i="rk_auto"></span><input class="fi" id="rauto" type="number" inputmode="decimal" step="0.1" min="1.01" placeholder="—" style="padding:8px"></div>
+  <button class="main-btn" id="rkbtn"></button>
+ </div>
+ <div class="plist" id="rkp"></div>
+</div>
+
+<!-- UPGIFT -->
+<div class="page" id="p-up">
+ <div class="gbar"><button class="gb" data-act="go" data-p="home" data-i="back"></button><b class="gt">⬆️ PLAY UP</b><div class="chip">💎 <span class="balv">0.00</span></div></div>
+ <div class="upwrap">
+  <div class="uplay"><div class="ptr">▼</div><div class="wheel" id="upw"></div>
+   <div class="wcent"><span class="chv" id="upchv">⌃</span><b id="upch"></b><small id="upsm"></small></div></div>
+  <div class="uppan">
+   <button class="upc" data-act="updon"><h4 data-i="up_pick_d"></h4><div class="slot" id="upd"></div></button>
+   <button class="upc" data-act="uptgt"><h4 data-i="up_pick_t"></h4><div class="slot" id="upt"></div></button>
+  </div>
+  <button class="upgo" id="upgo" data-act="upgo" data-i="up_go"></button>
+ </div>
+</div>
+
+<div class="page" id="p-top"><div class="h1" data-i="top_title"></div><div class="card" id="topl"></div></div>
+
+<!-- ПРОФИЛЬ И НАГРАДЫ -->
+<div class="page" id="p-prof">
+ <div class="h1" data-i="prof_title"></div>
+ <div class="card">
+  <div class="who"><span id="pavw"></span><div><b id="pname">—</b><span class="badge" id="prank"></span></div></div>
+  <div class="big"><span id="pbal">0.00</span> TON</div>
+  <div class="stats"><div><b id="sp">0</b><span data-i="st_games"></span></div><div><b id="sw">0</b><span data-i="st_wins"></span></div><div><b id="swr">0%</b><span data-i="st_wr"></span></div></div>
+ </div>
+ <div class="grid">
+  <button class="act" data-act="dep"><span>⬇️</span><i style="font-style:normal" data-i="deposit"></i></button>
+  <button class="act" data-act="wd"><span>⬆️</span><i style="font-style:normal" data-i="withdraw"></i></button>
+ </div>
+ <div class="tabs">
+  <button data-act="sub" data-s="me" class="on" data-i="tab_me"></button>
+  <button data-act="sub" data-s="inv" data-i="tab_inv"></button>
+  <button data-act="sub" data-s="fr" data-i="tab_fr"></button>
+  <button data-act="sub" data-s="rw" data-i="tab_rw"></button>
+ </div>
+ <div class="sub on" id="s-me">
+  <div class="card"><h3 data-i="rank_h"></h3><div id="rkinfo"></div></div>
+  <div class="card"><h3 data-i="lang_h"></h3><div class="seg"><button data-act="lang" data-l="ru">Русский</button><button data-act="lang" data-l="en">English</button></div></div>
+  <div class="card"><h3 data-i="anon_h"></h3>
+   <div class="sw"><div id="anname" style="font-size:14px;font-weight:700"></div><label><input type="checkbox" id="anon"><span></span></label></div>
+   <p data-i="anon_t1"></p><p data-i="anon_t2"></p><p data-i="anon_t3"></p><p data-i="anon_t4"></p><p data-i="anon_t5"></p>
+  </div>
+  <div class="card"><h3 data-i="my_hist"></h3><div id="hist"></div></div>
+  <div class="card"><h3 data-i="ops"></h3><div id="txl"></div></div>
+ </div>
+ <div class="sub" id="s-inv"><div id="invl"></div><p class="empty" data-i="inv_hint"></p></div>
+ <div class="sub" id="s-fr"><div class="card" id="frc"></div></div>
+ <div class="sub" id="s-rw">
+  <div class="card"><h3>PLAYBONUS</h3><div class="big" style="font-size:24px"><span id="pbv">0.0000</span> TON</div>
+   <button class="ok" id="pbc" data-act="pbclaim" style="width:100%;margin-top:10px;padding:12px" data-i="pb_claim"></button>
+   <p id="pbnote"></p><p data-i="pb_t1"></p><p data-i="pb_t2"></p><p data-i="pb_t3"></p><p data-i="pb_t4"></p></div>
+  <div class="card"><h3 data-i="promo_h"></h3><div class="pr"><input class="fi" id="pcode" maxlength="32" autocomplete="off" data-ph="promo_ph"><button class="ok" data-act="promo" data-i="promo_ok"></button></div></div>
+  <div class="h1" style="font-size:16px" data-i="quests"></div><div id="ql"></div>
+  <div class="h1" style="font-size:16px;margin-top:8px" data-i="vip_h"></div><div id="rkl"></div>
+ </div>
+</div>
+</div>
+
+<nav>
+ <button data-act="go" data-p="home" class="on"><span>🏠</span><i style="font-style:normal" data-i="n_home"></i></button>
+ <button data-act="go" data-p="top"><span>🏆</span><i style="font-style:normal" data-i="n_top"></i></button>
+ <button data-act="go" data-p="prof"><span>👤</span><i style="font-style:normal" data-i="n_prof"></i></button>
+</nav>
+<div id="toast"></div>
+<div class="sheet" id="sheet"><div class="sh-box"><button class="sh-x" id="shx" aria-label="×">✕</button><div id="shc"></div></div></div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+const $=i=>document.getElementById(i),tg=window.Telegram&&Telegram.WebApp,R=156,BR=11,W=320;
+if(tg){try{tg.ready();tg.expand()}catch(e){}}
+
+// ---------- переводы ----------
+const D={ru:{
+ n_home:'Главная',n_top:'Рейтинг',n_prof:'Профиль и награды',back:'← Назад',hit:'ХИТ',your_bal:'Ваш баланс',
+ bet_ice:'За Ice',bet_fire:'За Fire',amt_label:'Ставка в TON',open_hist:'История раундов →',
+ hist_title:'История раундов',top_title:'Рейтинг игроков',prof_title:'Профиль и награды',st_games:'игр',st_wins:'побед',st_wr:'винрейт',deposit:'Пополнить',withdraw:'Вывести',
+ tab_me:'Профиль',tab_inv:'Инвентарь',tab_fr:'Друзья',tab_rw:'Награды',rank_h:'Ранг',lang_h:'Язык',anon_h:'Анонимный режим',
+ anon_t1:'В игре и рейтинге другие игроки будут видеть ваше анонимное имя и аватар вместо обычного профиля.',
+ anon_t2:'Анонимное имя и аватар не меняются.',
+ anon_t3:'Скрываются только ставки и выигрыши, сделанные при включённом режиме. Предыдущая активность остаётся привязана к обычному профилю. Скрытая активность останется анонимной даже после выключения режима.',
+ anon_t4:'Во время раунда режим нельзя включить или выключить.',
+ anon_t5:'Рейтинг показывает ваш текущий выбор, поэтому если часто переключаться, вас будет легко узнать.',
+ my_hist:'Мои игры',ops:'Операции',inv_hint:'Подарок можно продать, вывести или использовать как донор в PLAY UP. При выводе нужно написать сообщение менеджеру, он одобрит заявку.',
+ pb_claim:'Забрать PLAYBONUS',pb_t1:'PLAYBONUS — это кешбэк за вашу игру. Он накапливается автоматически, пока вы играете.',
+ pb_t2:'Бонус растёт только за счёт вашей собственной игры. Чем больше вы играете, тем быстрее он накапливается.',
+ pb_t3:'Забрать бонус можно с уровня Silver. До этого он продолжает накапливаться и не сгорает.',
+ pb_t4:'Чем выше ваш VIP-уровень, тем больше возвращается в виде PLAYBONUS.',
+ pb_locked:'Доступно с уровня Silver',pb_ready:'Можно забрать',
+ promo_h:'Промокод',promo_ph:'Введите промокод',promo_ok:'Ок',quests:'Квесты',vip_h:'VIP-уровни',
+ turnover:'Оборот',to_next:'До {r}: ещё {a} TON',max_rank:'Максимальный уровень',cur:'Ваш уровень',
+ bonus_lvl:'Бонус {a} TON за достижение уровня',
+ pk_nft:'Бонусный NFT Gift за достижение уровня',pk_promo:'Эксклюзивные промокоды',pk_drops:'Спонтанные раздачи подарков',pk_vip:'Эксклюзивные VIP-розыгрыши',pk_pb:'PLAYBONUS',pk_mgr:'Персональный VIP-менеджер',pk_mgrb:'Бонусы от VIP-менеджера',
+ you:'Вы',win_w:'Победа',win_l:'Поражение',win_r:'Возврат',stake:'ставка',no_games:'Игр пока нет',no_ops:'Операций пока нет',no_rounds:'Раундов пока не было',no_top:'Пока никого',
+ op_withdraw:'Вывод',op_promo:'Промокод',op_quest:'Квест',op_pb:'PLAYBONUS',op_rank:'Бонус уровня',op_sell:'Продажа подарка',op_giftwd:'Вывод подарка',pending:'в обработке',done:'выполнено',rejected:'отклонено',
+ no_inv:'Инвентарь пуст',sell:'Продать',giftout:'Вывести',
+ round:'Раунд',bank:'Банк',players:'игроков',gifts:'подарков',chance:'Шанс',result:'Итог',payout:'Выплата',winners:'Победители',losers:'Проигравшие',won_side:'Победил',
+ fr_h:'Ваша реферальная ссылка',fr_t:'Вы получаете {p}% от комиссии с игр каждого приглашённого друга. Друг должен впервые открыть приложение по вашей ссылке.',fr_cnt:'Приглашено',fr_earn:'Заработано',copy:'Копировать',share:'Поделиться',copied:'Скопировано',
+ fr_nolink:'Ссылка станет доступна после настройки бота. Пока можно передать код:',share_text:'Играй в TON Duel!',
+ dep_h:'Пополнение',dep_t:'Отправьте TON на адрес:',dep_c:'Комментарий (обязательно):',dep_n:'Зачисление выполняется администратором после подтверждения перевода.',dep_off:'Пополнение пока недоступно.',
+ wd_h:'Вывод TON',wd_addr:'Адрес TON-кошелька',wd_sum:'Сумма, TON',wd_go:'Создать заявку',wd_min:'Минимум {a} TON. Вывод одобряет менеджер.',
+ gw_h:'Вывод подарка',gw_msg:'Сообщение менеджеру',gw_t:'Менеджер получит уведомление о том, какой подарок вы хотите вывести, и одобрит заявку.',gw_go:'Отправить заявку',
+ connecting:'Подключение…',offline:'Нет связи…',st_bet:'Ставки:',sec:'c',st_spin:'Шарик летит…',st_win:'Победил',wait:'Ожидание игроков',
+ anon_now:'Ваш псевдоним',anon_off_t:'Включите режим, чтобы получить секретное имя и аватар',
+ live_empty:'Здесь появятся выигрыши',g_duel:'PVP HUB',g_rk:'Ракетка',g_up:'PLAY UP',
+ rk_bet:'Сделать ставку',rk_done:'Ставка сделана',rk_cash:'Забрать',rk_cashed:'Забрано',rk_wait:'Ждите следующий раунд',rk_over:'Раунд окончен',
+ rk_auto:'Авто-вывод на ×',rk_in:'Старт через {s} c',rk_gone:'Улетела на',rk_empty:'Ставок пока нет',rk_lost:'сгорело',
+ up_pick_d:'Выберите подарки или TON',up_pick_t:'Выберите подарок для апгрейда',up_items:'Ваши предметы',up_target:'Предмет для апгрейда',up_go:'⬆ ПРОКАЧАТЬ ПОДАРОК',up_busy:'Крутим…',
+ up_donor_h:'Донор: подарки и TON',up_target_h:'Цель апгрейда',up_ton:'Добавить TON',up_done:'Готово',up_total:'Сумма донора',up_need:'Нужна цена выше донора',up_win:'Успех!',up_lose:'Не повезло',up_got:'Вы получили',up_lost:'Донор сгорел',up_fee:'Комиссия {p}% уже учтена в шансе',
+ g_up_h:'UpGift',
+ m_auth:'Ошибка авторизации',m_closed:'Ставки закрыты',m_min_bet:'Минимум 0.1 TON',m_no_funds:'Недостаточно TON',m_other_team:'Вы уже на другой команде',
+ m_promo_empty:'Введите промокод',m_promo_bad:'Неверный промокод',m_promo_used:'Вы уже использовали этот промокод',m_promo_gone:'Промокод закончился',m_promo_many:'Слишком много попыток, попробуйте позже',
+ m_quest_claimed:'Награда уже получена',m_quest_not_done:'Квест ещё не выполнен',m_addr_bad:'Неверный адрес TON',m_min_wd:'Минимум для вывода {a} TON',m_wait_round:'Дождитесь конца раунда',
+ m_pb_locked:'PLAYBONUS доступен с уровня Silver',m_pb_empty:'Пока нечего забирать',m_anon_locked:'Во время раунда режим менять нельзя',m_no_item:'Предмет не найден',m_msg_short:'Напишите сообщение менеджеру',
+ m_rk_closed:'Приём ставок закрыт',m_rk_already:'Ставка уже сделана',m_rk_late:'Не успели: ракета улетела',m_up_busy:'Апгрейд уже идёт',m_up_min:'Минимум 0.1 TON в доноре',m_up_target_low:'Цель должна быть дороже донора',m_up_chance_low:'Шанс слишком мал (меньше 1%)',
+ m_refund:'Нет соперника, ставки возвращены',m_promo_ok:'Промокод активирован: +{a} TON',m_reward:'Награда: +{a} TON',m_pb_ok:'PLAYBONUS: +{a} TON',m_anon_on:'Анонимный режим включён',m_anon_off:'Анонимный режим выключен',
+ m_wd_created:'Заявка на вывод создана',m_gift_sold:'Подарок продан: +{a} TON',m_gift_req:'Заявка на вывод подарка отправлена',m_rank_up:'Новый уровень: {r} 🎉',m_friend_joined:'Ваш друг присоединился 🎉',
+ m_req_ok:'Заявка одобрена ✅',m_req_no:'Заявка отклонена, возвращено в инвентарь/баланс',m_win:'Вы выиграли +{a} TON 🎉',m_cash:'Забрано +{a} TON 🚀',
+ q_first:'Сделай первую ставку',q_play5:'Сыграй 5 раундов',q_win3:'Выиграй 3 раунда',q_promo:'Активируй промокод',q_invite:'Пригласи друга',reward:'Награда',claim:'Забрать',claimed:'Получено'
+},en:{
+ n_home:'Home',n_top:'Top',n_prof:'Profile & rewards',back:'← Back',hit:'HIT',your_bal:'Your balance',
+ bet_ice:'For Ice',bet_fire:'For Fire',amt_label:'Bet in TON',open_hist:'Round history →',
+ hist_title:'Round history',top_title:'Leaderboard',prof_title:'Profile & rewards',st_games:'games',st_wins:'wins',st_wr:'win rate',deposit:'Deposit',withdraw:'Withdraw',
+ tab_me:'Profile',tab_inv:'Inventory',tab_fr:'Friends',tab_rw:'Rewards',rank_h:'Rank',lang_h:'Language',anon_h:'Anonymous mode',
+ anon_t1:'In the game and leaderboard other players will see your anonymous name and avatar instead of your regular profile.',
+ anon_t2:'The anonymous name and avatar do not change.',
+ anon_t3:'Only bets and wins made while the mode is on are hidden. Earlier activity stays linked to your regular profile. Hidden activity stays anonymous even after you turn the mode off.',
+ anon_t4:'The mode cannot be turned on or off during a round.',
+ anon_t5:'The leaderboard shows your current choice, so switching often makes you easy to recognize.',
+ my_hist:'My games',ops:'Transactions',inv_hint:'A gift can be sold, withdrawn or used as a donor in PLAY UP. To withdraw, write a message to the manager, who will approve the request.',
+ pb_claim:'Claim PLAYBONUS',pb_t1:'PLAYBONUS is cashback for your play. It accumulates automatically while you play.',
+ pb_t2:'The bonus grows only from your own play. The more you play, the faster it builds up.',
+ pb_t3:'You can claim the bonus from the Silver level. Until then it keeps accumulating and never expires.',
+ pb_t4:'The higher your VIP level, the more is returned as PLAYBONUS.',
+ pb_locked:'Available from Silver',pb_ready:'Ready to claim',
+ promo_h:'Promo code',promo_ph:'Enter promo code',promo_ok:'OK',quests:'Quests',vip_h:'VIP levels',
+ turnover:'Turnover',to_next:'To {r}: {a} TON more',max_rank:'Maximum level',cur:'Your level',
+ bonus_lvl:'{a} TON bonus for reaching the level',
+ pk_nft:'Bonus NFT Gift for reaching the level',pk_promo:'Exclusive promo codes',pk_drops:'Spontaneous gift drops',pk_vip:'Exclusive VIP raffles',pk_pb:'PLAYBONUS',pk_mgr:'Personal VIP manager',pk_mgrb:'VIP manager bonuses',
+ you:'You',win_w:'Win',win_l:'Loss',win_r:'Refund',stake:'bet',no_games:'No games yet',no_ops:'No transactions yet',no_rounds:'No rounds yet',no_top:'Nobody yet',
+ op_withdraw:'Withdrawal',op_promo:'Promo code',op_quest:'Quest',op_pb:'PLAYBONUS',op_rank:'Level bonus',op_sell:'Gift sold',op_giftwd:'Gift withdrawal',pending:'pending',done:'completed',rejected:'rejected',
+ no_inv:'Inventory is empty',sell:'Sell',giftout:'Withdraw',
+ round:'Round',bank:'Bank',players:'players',gifts:'gifts',chance:'Chance',result:'Result',payout:'Payout',winners:'Winners',losers:'Losers',won_side:'Winner',
+ fr_h:'Your referral link',fr_t:'You get {p}% of the commission from every game of each invited friend. The friend must open the app for the first time via your link.',fr_cnt:'Invited',fr_earn:'Earned',copy:'Copy',share:'Share',copied:'Copied',
+ fr_nolink:'The link will be available once the bot is configured. For now you can share the code:',share_text:'Play TON Duel!',
+ dep_h:'Deposit',dep_t:'Send TON to this address:',dep_c:'Comment (required):',dep_n:'Funds are credited by an administrator after the transfer is confirmed.',dep_off:'Deposits are not available yet.',
+ wd_h:'Withdraw TON',wd_addr:'TON wallet address',wd_sum:'Amount, TON',wd_go:'Create request',wd_min:'Minimum {a} TON. A manager approves withdrawals.',
+ gw_h:'Withdraw gift',gw_msg:'Message to the manager',gw_t:'The manager will be notified which gift you want to withdraw and will approve the request.',gw_go:'Send request',
+ connecting:'Connecting…',offline:'No connection…',st_bet:'Bets:',sec:'s',st_spin:'The ball is rolling…',st_win:'Winner:',wait:'Waiting for players',
+ anon_now:'Your alias',anon_off_t:'Turn on the mode to get a secret name and avatar',
+ live_empty:'Wins will appear here',g_duel:'PVP HUB',g_rk:'Rocket',g_up:'PLAY UP',
+ rk_bet:'Place a bet',rk_done:'Bet placed',rk_cash:'Cash out',rk_cashed:'Cashed out',rk_wait:'Wait for the next round',rk_over:'Round over',
+ rk_auto:'Auto cash-out at ×',rk_in:'Starts in {s} s',rk_gone:'Crashed at',rk_empty:'No bets yet',rk_lost:'lost',
+ up_pick_d:'Choose gifts or TON',up_pick_t:'Choose a gift to upgrade',up_items:'Your items',up_target:'Item to upgrade',up_go:'⬆ UPGRADE GIFT',up_busy:'Spinning…',
+ up_donor_h:'Donor: gifts and TON',up_target_h:'Upgrade target',up_ton:'Add TON',up_done:'Done',up_total:'Donor value',up_need:'Price must exceed the donor',up_win:'Success!',up_lose:'Unlucky',up_got:'You received',up_lost:'The donor is gone',up_fee:'A {p}% fee is already included in the chance',
+ g_up_h:'UpGift',
+ m_auth:'Authorization error',m_closed:'Betting is closed',m_min_bet:'Minimum 0.1 TON',m_no_funds:'Not enough TON',m_other_team:'You are already on the other team',
+ m_promo_empty:'Enter a promo code',m_promo_bad:'Invalid promo code',m_promo_used:'You have already used this promo code',m_promo_gone:'This promo code has run out',m_promo_many:'Too many attempts, try later',
+ m_quest_claimed:'Reward already claimed',m_quest_not_done:'Quest is not completed yet',m_addr_bad:'Invalid TON address',m_min_wd:'Minimum withdrawal is {a} TON',m_wait_round:'Wait for the round to end',
+ m_pb_locked:'PLAYBONUS is available from Silver',m_pb_empty:'Nothing to claim yet',m_anon_locked:'Cannot change the mode during a round',m_no_item:'Item not found',m_msg_short:'Write a message to the manager',
+ m_rk_closed:'Betting is closed',m_rk_already:'Bet already placed',m_rk_late:'Too late: the rocket has crashed',m_up_busy:'An upgrade is already running',m_up_min:'Donor must be at least 0.1 TON',m_up_target_low:'The target must cost more than the donor',m_up_chance_low:'Chance is too low (under 1%)',
+ m_refund:'No opponent, bets refunded',m_promo_ok:'Promo code activated: +{a} TON',m_reward:'Reward: +{a} TON',m_pb_ok:'PLAYBONUS: +{a} TON',m_anon_on:'Anonymous mode on',m_anon_off:'Anonymous mode off',
+ m_wd_created:'Withdrawal request created',m_gift_sold:'Gift sold: +{a} TON',m_gift_req:'Gift withdrawal request sent',m_rank_up:'New level: {r} 🎉',m_friend_joined:'Your friend has joined 🎉',
+ m_req_ok:'Request approved ✅',m_req_no:'Request rejected, returned to inventory/balance',m_win:'You won +{a} TON 🎉',m_cash:'Cashed out +{a} TON 🚀',
+ q_first:'Place your first bet',q_play5:'Play 5 rounds',q_win3:'Win 3 rounds',q_promo:'Activate a promo code',q_invite:'Invite a friend',reward:'Reward',claim:'Claim',claimed:'Claimed'
+}};
+const tgLang=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user&&tg.initDataUnsafe.user.language_code;
+let lang;try{lang=localStorage.getItem('lang')}catch(e){}
+if(!D[lang])lang=tgLang&&tgLang.startsWith('ru')?'ru':(tgLang?'en':'ru');
+const t=(k,p)=>{let s=(D[lang][k]!=null?D[lang][k]:D.ru[k]!=null?D.ru[k]:k);
+ if(p)for(const x in p)s=s.replace('{'+x+'}',x=='a'?f2(p[x]):p[x]);return s};
+const msg=(k,p)=>t('m_'+k,p);
+function applyLang(){document.documentElement.lang=lang;
+ document.querySelectorAll('[data-i]').forEach(e=>e.textContent=t(e.dataset.i));
+ document.querySelectorAll('[data-ph]').forEach(e=>e.placeholder=t(e.dataset.ph));
+ document.querySelectorAll('[data-al]').forEach(e=>e.setAttribute('aria-label',t(e.dataset.al)));
+ document.querySelectorAll('[data-l]').forEach(b=>b.classList.toggle('on',b.dataset.l==lang));
+ render();if(P)renderProfile();renderRounds();renderTop();renderLive();rkRender();renderUp()}
+
+// ---------- состояние ----------
+const f2=c=>(c/100).toFixed(2),f4=c=>(c/100).toFixed(4);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ws,bal=0,st={phase:'bet',bets:[],endsAt:0},spin=null,bx=160,tbx=160,ball={x:160,y:160},trail=[],lastWin=null,P=null,RD=[],TOP=[],LIVE=[],CAT=[],UPFEE=.05,lastLive=0;
+let RK={phase:'bet',bets:[],hist:[],endsAt:0,start:0,k:.11,off:0,crash:0};
+const open=new Set();
+function toast(s){const e=$('toast');e.textContent=s;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2800)}
+const sendMsg=m=>{if(ws&&ws.readyState==1)ws.send(JSON.stringify(m))};
+const avh=(x,cls='')=>`<i class="av ${cls}" style="background:hsl(${x.h!=null?x.h:220} 42% 28%)">${x.av?esc(x.av):esc((x.n||'?').trim().charAt(0).toUpperCase()||'?')}</i>`;
+const fmtD=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear()};
+const fmtT=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())};
+const sideN=s=>s=='i'?'Ice ❄':'Fire 🔥',sideC=s=>s=='i'?'ice':'fire';
+const sgn=v=>(v>0?'+':'')+f2(v);
+const setBal=()=>document.querySelectorAll('.balv').forEach(e=>e.textContent=f2(bal));
+const gname=g=>t({duel:'g_duel',rk:'g_rk',up:'g_up'}[g]||'g_duel');
+
+function pools(){let i=0,f=0;st.bets.forEach(b=>b.s=='i'?i+=b.a:f+=b.a);return{i,f}}
+function render(){const p=pools(),tt=p.i+p.f;$('pi').textContent=f2(p.i);$('pf').textContent=f2(p.f);setBal();
+ if(st.phase!='spin')tbx=160-R+2*R*(tt?p.i/tt:.5);
+ $('pl').innerHTML=st.bets.length?st.bets.slice().reverse().map(b=>`<div><span class="${sideC(b.s)}">${b.m?t('you'):esc(b.n)}</span><b>${f2(b.a)} TON</b></div>`).join(''):`<div>${t('wait')}</div>`;
+ $('bi').disabled=$('bf').disabled=st.phase!='bet'}
+
+function conn(){
+ ws=new WebSocket((location.protocol=='https:'?'wss://':'ws://')+location.host);
+ ws.onopen=()=>{let dev;try{dev=localStorage.getItem('dev')||('P'+Math.random().toString(36).slice(2,6));localStorage.setItem('dev',dev)}catch(e){dev='P'+Math.random().toString(36).slice(2,6)}
+  const ref=new URLSearchParams(location.search).get('ref')||'';
+  ws.send(JSON.stringify(tg&&tg.initData?{t:'auth',init:tg.initData}:{t:'auth',dev,ref}))};
+ ws.onmessage=e=>{const m=JSON.parse(e.data);
+  if(m.t=='me'){bal=m.bal;sendMsg({t:'profile'})}
+  else if(m.t=='cfg'){CAT=m.catalog;UPFEE=m.upFee;renderUp()}
+  else if(m.t=='bal'){bal=m.bal;if(P){P.bal=m.bal;$('pbal').textContent=f2(m.bal)}}
+  else if(m.t=='state'){st=m;if(m.phase=='bet'){spin=null;lastWin=null;trail=[];ball={x:160,y:160};bx=tbx=160}}
+  else if(m.t=='spin'){st.phase='spin';spin={path:m.path,t0:performance.now()};tbx=bx=m.bx}
+  else if(m.t=='result'){bal=m.bal;lastWin=m.win;if(m.pay>0)toast(msg('win',{a:m.pay}));if(P)sendMsg({t:'profile'})}
+  else if(m.t=='profile'){P=m;renderProfile();renderUp()}
+  else if(m.t=='rounds'){RD=m.list;renderRounds()}
+  else if(m.t=='top'){TOP=m.list;renderTop()}
+  else if(m.t=='live'){LIVE=m.list;lastLive=LIVE.length?LIVE[0].id:0;renderLive()}
+  else if(m.t=='live_add'){LIVE.unshift(m.e);if(LIVE.length>40)LIVE.length=40;renderLive(m.e.id)}
+  else if(m.t=='rk'){const prev=RK;RK=m;RK.off=m.now-Date.now();
+   const mine=m.bets.find(b=>b.m);
+   if(mine&&mine.x&&!(prev.bets.find(b=>b.m)||{}).x)toast(msg('cash',{a:mine.pay}));rkRender()}
+  else if(m.t=='up_start')upSpin(m);
+  else if(m.t=='up_end')upEnd(m);
+  else if(m.t=='err'||m.t=='notice')toast(msg(m.k,m.p));
+  render()};
+ ws.onclose=()=>{$('st').textContent=t('offline');setTimeout(conn,1500)}}
+function bet(s){sendMsg({t:'bet',s,a:parseFloat($('amt').value)})}
+$('bi').onclick=()=>bet('i');$('bf').onclick=()=>bet('f');
+document.querySelectorAll('.q').forEach(b=>b.onclick=()=>$(b.dataset.t).value=b.dataset.v=='max'?Math.floor(bal/10)/10:b.dataset.v);
+
+// ---------- навигация и действия ----------
+function go(p){const nav=['duel','rk','up','hist'].includes(p)?'home':p;
+ document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.p==nav));
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));$('p-'+p).classList.add('on');$('main').scrollTop=0;
+ if(p=='prof'||p=='up'||p=='home')sendMsg({t:'profile'});if(p=='hist')sendMsg({t:'rounds'});if(p=='top')sendMsg({t:'top'});
+ if(p=='rk')rkRender();if(p=='up')renderUp()}
+function sub(s){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.s==s));
+ document.querySelectorAll('.sub').forEach(x=>x.classList.toggle('on',x.id=='s-'+s))}
+function sheet(h){$('shc').innerHTML=h;$('sheet').classList.add('on')}
+function closeSheet(){$('sheet').classList.remove('on')}
+$('shx').onclick=closeSheet;$('sheet').onclick=e=>{if(e.target==$('sheet'))closeSheet()};
+function copy(s){try{navigator.clipboard.writeText(s).then(()=>toast(t('copied')),()=>fb())}catch(e){fb()}
+ function fb(){const a=document.createElement('textarea');a.value=s;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(t('copied'))}catch(e){}a.remove()}}
+document.addEventListener('click',e=>{
+ const rd=e.target.closest('.rd .hd');if(rd){const c=rd.parentNode,n=+c.dataset.r;c.classList.toggle('open');c.classList.contains('open')?open.add(n):open.delete(n);return}
+ const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const d=b.dataset;
+ switch(d.act){
+  case 'go':go(d.p);break;
+  case 'sub':sub(d.s);break;
+  case 'lang':lang=d.l;try{localStorage.setItem('lang',lang)}catch(x){}applyLang();break;
+  case 'promo':{const code=$('pcode').value.trim();if(code){sendMsg({t:'promo',code});$('pcode').value=''}break}
+  case 'claim':sendMsg({t:'claim',id:d.id});break;
+  case 'pbclaim':sendMsg({t:'pbclaim'});break;
+  case 'sell':sendMsg({t:'sell',id:d.id});break;
+  case 'giftwd':sheet(`<h3>${t('gw_h')}</h3><textarea class="fi" id="gm" maxlength="300" placeholder="${t('gw_msg')}"></textarea><p style="font-size:12px;color:var(--mut);margin-bottom:10px">${t('gw_t')}</p><button class="ok" style="width:100%;padding:13px" data-act="giftsend" data-id="${esc(d.id)}">${t('gw_go')}</button>`);break;
+  case 'giftsend':sendMsg({t:'giftwd',id:d.id,msg:$('gm').value});closeSheet();break;
+  case 'dep':sheet(P&&P.wallet?`<h3>${t('dep_h')}</h3><div style="font-size:13px">${t('dep_t')}</div><div class="mono">${esc(P.wallet)}</div><div style="font-size:13px">${t('dep_c')}</div><div class="mono">${esc(P.uid)}</div><p class="empty">${t('dep_n')}</p>`:`<h3>${t('dep_h')}</h3><p class="empty">${t('dep_off')}</p>`);break;
+  case 'wd':sheet(`<h3>${t('wd_h')}</h3><input class="fi" id="wa" placeholder="${t('wd_addr')}" autocomplete="off"><input class="fi" id="wsum" type="number" inputmode="decimal" step="0.1" placeholder="${t('wd_sum')}"><button class="ok" style="width:100%;padding:13px;margin-top:4px" data-act="wdgo">${t('wd_go')}</button><p class="empty">${t('wd_min',{a:P?P.minWd:100})}</p>`);break;
+  case 'wdgo':sendMsg({t:'withdraw',addr:$('wa').value,a:parseFloat($('wsum').value)});closeSheet();break;
+  case 'copy':copy(d.v);break;
+  case 'share':{const u='https://t.me/share/url?url='+encodeURIComponent(d.v)+'&text='+encodeURIComponent(t('share_text'));
+   if(tg&&tg.openTelegramLink)tg.openTelegramLink(u);else window.open(u,'_blank');break}
+  case 'livei':{const x=LIVE.find(l=>l.id==d.id);if(x)toast(x.n+' · '+gname(x.g)+' · '+(x.amt!=null?'+'+f2(x.amt)+' TON':x.name));break}
+  case 'updon':openDonors();break;
+  case 'uptgt':openTargets();break;
+  case 'updone':{upSel=new Set([...document.querySelectorAll('.pk input[data-id]:checked')].map(i=>i.dataset.id));upTon=Math.max(0,parseFloat($('upton').value)||0);closeSheet();renderUp();break}
+  case 'uppick':upTarget=d.id;closeSheet();renderUp();break;
+  case 'upgo':sendMsg({t:'up',donors:[...upSel],ton:upTon,target:upTarget});break;
+ }});
+$('anon').onchange=e=>{sendMsg({t:'anon',on:e.target.checked});setTimeout(()=>sendMsg({t:'profile'}),200)};
+
+// ---------- главная: шапка и Live ----------
+function renderHome(){if(!P)return;const m=P,shown=m.anonOn&&m.anon?{n:m.anon.name,av:m.anon.av,h:m.h}:{n:m.name,av:'',h:m.h};
+ $('hav').innerHTML=avh(shown,'xl');$('hanon').style.display=m.anonOn?'flex':'none'}
+function renderLive(newId){
+ $('live').innerHTML=LIVE.length?LIVE.map(e=>`<div class="lc ${e.g} ${e.id==newId?'new':''}" data-act="livei" data-id="${e.id}">${avh(e)}<div class="li">${esc(e.ico)}</div><small>${e.amt!=null?'+'+f2(e.amt):esc(e.name)}</small></div>`).join(''):`<div class="lempty">${t('live_empty')}</div>`}
+
+// ---------- профиль ----------
+function hrow(h){const g=h.g||'duel',net=h.pay-h.a,cls=h.res=='refund'?'neu':net>0?'pos':net<0?'neg':'neu',lbl={win:t('win_w'),lose:t('win_l'),refund:t('win_r')}[h.res];
+ const title=g=='rk'?`🚀 ${t('g_rk')} #${h.r} · ×${Number(h.x).toFixed(2)}`:g=='up'?`⬆️ UpGift · ${esc(h.item)}`:`${t('round')} #${h.r} · <span class="${sideC(h.s)}">${sideN(h.s)}</span>`;
+ return `<div class="hr"><div>${title}<small>${lbl} · ${t('stake')} ${f2(h.a)} TON · ${fmtD(h.ts)} ${fmtT(h.ts)}</small></div><span class="${cls}">${h.res=='refund'?'0.00':sgn(net)} TON</span></div>`}
+function renderProfile(){const m=P,rk=m.ranks[m.rank],nx=m.ranks[m.rank+1],shown=m.anonOn&&m.anon?{n:m.anon.name,av:m.anon.av,h:m.h}:{n:m.name,av:'',h:m.h};
+ $('pavw').innerHTML=avh(shown,'lg');renderHome();
+ $('pname').textContent=shown.n;$('prank').textContent=rk.name;$('pbal').textContent=f2(m.bal);$('sp').textContent=m.played;$('sw').textContent=m.won;
+ $('swr').textContent=(m.played?Math.round(m.won/m.played*100):0)+'%';
+ $('rkinfo').innerHTML=`<div class="hr" style="border:0;padding:0"><b>${rk.name}</b><span>${t('turnover')}: ${f2(m.turnover)} TON</span></div>`+
+  (nx?`<div class="bar"><i style="width:${Math.min(100,Math.max(0,(m.turnover-rk.min)/(nx.min-rk.min)*100))}%"></i></div><p>${t('to_next',{r:nx.name,a:Math.max(0,nx.min-m.turnover)})}</p>`:`<p>${t('max_rank')}</p>`);
+ $('anon').checked=m.anonOn;
+ $('anname').innerHTML=m.anon?`${t('anon_now')}: <span class="me">${esc(m.anon.av)} ${esc(m.anon.n)}</span>`:`<span style="color:var(--mut);font-weight:600;font-size:13px">${t('anon_off_t')}</span>`;
+ $('hist').innerHTML=m.hist.length?m.hist.map(hrow).join(''):`<div class="empty">${t('no_games')}</div>`;
+ $('txl').innerHTML=m.tx.length?m.tx.map(x=>{const neg=x.k=='withdraw',lbl={withdraw:t('op_withdraw'),promo:t('op_promo'),quest:t('op_quest'),pb:t('op_pb'),rank:t('op_rank'),sell:t('op_sell'),giftwd:t('op_giftwd')}[x.k]||x.k;
+  const sb=x.k=='quest'?t(x.note):x.note||'',stt=x.st=='pending'?' · '+t('pending'):x.st=='rejected'?' · '+t('rejected'):'';
+  return `<div class="hr"><div>${lbl}<small>${esc(sb)}${stt} · ${fmtD(x.ts)} ${fmtT(x.ts)}</small></div>${x.a?`<span class="${neg?'neg':'pos'}">${neg?'-':'+'}${f2(x.a)} TON</span>`:''}</div>`}).join(''):`<div class="empty">${t('no_ops')}</div>`;
+ $('invl').innerHTML=m.inv.length?m.inv.map(i=>`<div class="card"><div class="hr" style="border:0;padding:0"><div style="font-size:15px;font-weight:800">${esc(i.ico)} ${esc(i.name)}<small>≈ ${f2(i.val)} TON</small></div></div>
+  <div class="pr" style="margin-top:10px"><button class="ok" style="flex:1" data-act="sell" data-id="${esc(i.id)}">${t('sell')} · ${f2(i.val)} TON</button><button class="ghost" style="flex:1" data-act="giftwd" data-id="${esc(i.id)}">${t('giftout')}</button></div></div>`).join(''):`<div class="empty">${t('no_inv')}</div>`;
+ const r=m.ref,val=r.link||r.code;
+ $('frc').innerHTML=`<h3>${t('fr_h')}</h3>${r.link?'':`<p style="margin:0 0 6px">${t('fr_nolink')}</p>`}<div class="mono">${esc(val)}</div>
+  <div class="pr"><button class="ok" style="flex:1" data-act="copy" data-v="${esc(val)}">${t('copy')}</button>${r.link?`<button class="ghost" style="flex:1" data-act="share" data-v="${esc(r.link)}">${t('share')}</button>`:''}</div>
+  <div class="stats"><div><b>${r.count}</b>${t('fr_cnt')}</div><div><b>${f2(r.earn)}</b>${t('fr_earn')} TON</div></div><p>${t('fr_t',{p:r.pct})}</p>`;
+ $('pbv').textContent=f4(m.pb);$('pbc').disabled=!m.pbOk||m.pb<1;$('pbnote').textContent=m.pbOk?t('pb_ready'):t('pb_locked');
+ $('ql').innerHTML=m.quests.map(q=>{const done=q.prog>=q.goal;
+  return `<div class="card"><div class="hr" style="border:0;padding:0"><div>${t(q.title)}<small>${t('reward')} ${f2(q.reward)} TON · ${q.prog}/${q.goal}</small></div>${q.claimed?`<span class="neu">${t('claimed')}</span>`:`<button class="ok" data-act="claim" data-id="${q.id}" ${done?'':'disabled'}>${t('claim')}</button>`}</div><div class="bar"><i style="width:${q.prog/q.goal*100}%"></i></div></div>`}).join('');
+ $('rkl').innerHTML=m.ranks.slice(1).map((r,i)=>{const idx=i+1;
+  return `<div class="rank ${idx==m.rank?'cur':idx>m.rank?'lock':''}"><b>${r.name}</b>${idx==m.rank?` · <span class="me">${t('cur')}</span>`:''}<small>${t('turnover')} ${f2(r.min)} TON</small><ul>${r.bonus?`<li>${t('bonus_lvl',{a:r.bonus})}</li>`:''}${r.perks.map(k=>`<li>${t('pk_'+k)}</li>`).join('')}</ul></div>`}).join('')}
+
+// ---------- история раундов дуэли ----------
+function renderRounds(){
+ $('rdl').innerHTML=RD.length?RD.map(r=>{
+  const ch=r.win=='i'?r.ci:r.cf,W_=r.players.filter(p=>p.s==r.win),L_=r.players.filter(p=>p.s!=r.win),pi=Math.round(r.ci*100),pf=100-pi;
+  const row=(p,w)=>`<div class="pw">${avh(p)}<div class="nm ${p.m?'me':''}">${p.m?t('you'):esc(p.n)}<small>${t('stake')} ${f2(p.a)} TON</small></div><span class="${w?'pos':'neg'}">${w?'+'+f2(p.pay):'-'+f2(p.a)} TON</span></div>`;
+  return `<div class="rd ${open.has(r.r)?'open':''}" data-r="${r.r}"><div class="hd"><span class="no">#${r.r}</span><span class="wb ${sideC(r.win)}">🏆 ${sideN(r.win)}</span><b style="color:var(--or2)">🏦 ${f2(r.pool)} TON</b></div>
+   <div class="mt"><span>📅 ${fmtD(r.ts)}</span><span>🕒 ${fmtT(r.ts)}</span><span>🎯 ${t('chance')} ${Math.round(ch*100)}%</span><span>👥 ${r.players.length}</span><span>🎁 ${r.gifts}</span></div>
+   <div class="rdx"><div class="chl"><span class="ice">Ice ❄ ${pi}%</span><span class="fire">${pf}% Fire 🔥</span></div><div class="ch"><i style="width:${pi}%;background:var(--ice)"></i><i style="width:${pf}%;background:var(--fire)"></i></div>
+    <div class="mt"><span>${t('result')}: ${t('won_side')} ${sideN(r.win)}</span><span>${t('payout')}: ${f2(r.prize)} TON</span></div>
+    <h4>${t('winners')} (${W_.length})</h4>${W_.map(p=>row(p,1)).join('')}<h4>${t('losers')} (${L_.length})</h4>${L_.map(p=>row(p,0)).join('')}</div></div>`}).join(''):`<div class="empty">${t('no_rounds')}</div>`}
+
+function renderTop(){$('topl').innerHTML=TOP.length?TOP.map((x,i)=>`<div class="pw"><b style="width:22px;color:var(--mut)">${i+1}</b>${avh(x)}<div class="nm ${x.m?'me':''}">${x.m?t('you'):esc(x.n)}</div><span class="pos">+${f2(x.v)} TON</span></div>`).join(''):`<div class="empty">${t('no_top')}</div>`}
+
+// ---------- Ракетка ----------
+const rkX=()=>Math.floor(Math.exp(RK.k*Math.max(0,Date.now()+RK.off-RK.start)/1000)*100)/100;
+const cxc=v=>v>=10?'gd':v>=5?'pu':v>=2?'bl':'gr';
+function rkRender(){
+ $('rkh').innerHTML=RK.hist.map((v,i)=>`<span class="cx ${cxc(v)}" ${i==0?'style="box-shadow:0 0 10px currentColor"':''}>${v.toFixed(2)}x</span>`).join('');
+ const mine=RK.bets.find(b=>b.m),btn=$('rkbtn');btn.classList.remove('cash');
+ if(RK.phase=='bet'){btn.textContent=mine?t('rk_done'):t('rk_bet');btn.disabled=!!mine}
+ else if(RK.phase=='fly'){if(mine&&!mine.x){btn.classList.add('cash');btn.textContent=t('rk_cash')+' '+f2(Math.floor(mine.a*rkX()));btn.disabled=false}
+  else{btn.textContent=mine?t('rk_cashed')+' ×'+mine.x.toFixed(2):t('rk_wait');btn.disabled=true}}
+ else{btn.textContent=t('rk_over');btn.disabled=true}
+ $('rkp').innerHTML=RK.bets.length?RK.bets.slice().reverse().map(b=>{
+  const val=b.x?`<span class="rv w">×${b.x.toFixed(2)} · +${f2(b.pay)}</span>`:RK.phase=='crash'?`<span class="rv l">−${f2(b.a)}</span>`:`<span class="rv">…</span>`;
+  return `<div class="rowp">${avh(b)}<div class="nm"><span>${b.m?t('you'):esc(b.n)}</span><small>💎 ${f2(b.a)}${b.auto?' ×'+b.auto:''}</small></div>${val}</div>`}).join(''):`<div class="empty">${t('rk_empty')}</div>`}
+$('rkbtn').onclick=()=>{
+ if(RK.phase=='bet')sendMsg({t:'rk_bet',a:parseFloat($('ramt').value),auto:parseFloat($('rauto').value)||0});
+ else if(RK.phase=='fly')sendMsg({t:'rk_cash'})};
+const rc=$('rkc'),rg=rc.getContext('2d'),RW=340,RH=220,dpr=Math.min(window.devicePixelRatio||1,3);rc.width=RW*dpr;rc.height=RH*dpr;
+const stars=Array.from({length:50},()=>({x:Math.random()*RW,y:Math.random()*RH,v:.4+Math.random()*1.2,r:.6+Math.random()*1.8}));
+function drawRk(tm){
+ rg.setTransform(dpr,0,0,dpr,0,0);rg.clearRect(0,0,RW,RH);
+ const fly=RK.phase=='fly',x=fly?rkX():RK.phase=='crash'?RK.crash:1,sp=fly?2+Math.min(14,Math.log(x)*5):.25;
+ stars.forEach(s=>{if(RK.phase!='crash'){s.y+=s.v*sp*.6;s.x-=s.v*sp*.3}
+  if(s.y>RH){s.y=-3;s.x=Math.random()*RW}if(s.x<-3){s.x=RW+3;s.y=Math.random()*RH}
+  rg.fillStyle='rgba(255,255,255,.75)';rg.beginPath();rg.arc(s.x,s.y,s.r,0,7);rg.fill();
+  if(fly&&sp>6){rg.strokeStyle='rgba(255,255,255,.25)';rg.lineWidth=s.r*.7;rg.beginPath();rg.moveTo(s.x,s.y);rg.lineTo(s.x+sp*.9,s.y-sp*1.6);rg.stroke()}});
+ rg.font='72px serif';rg.textAlign='center';rg.textBaseline='middle';
+ const bob=Math.sin(tm/180)*(fly?3:6);
+ rg.fillText(RK.phase=='crash'?'💥':'🚀',RW/2+(fly?Math.sin(tm/90)*1.5:0),RH/2+10+bob);
+ const el=$('rkx');el.className='rkx '+(fly?'fly':RK.phase=='crash'?'crash':'');
+ el.textContent=(fly?x:RK.phase=='crash'?RK.crash:1).toFixed(2)+'x';
+ $('rks').textContent=RK.phase=='bet'?t('rk_in',{s:Math.max(0,Math.ceil((RK.endsAt-(Date.now()+RK.off))/1000))}):RK.phase=='crash'?t('rk_gone')+' '+RK.crash.toFixed(2)+'x':'';
+ if(fly)rkRender()}
+
+// ---------- UpGift ----------
+let upSel=new Set(),upTon=0,upTarget=null,upBusy=false;
+const upVal=()=>{let v=0;if(P)P.inv.forEach(i=>{if(upSel.has(i.id))v+=i.val});return v+Math.round(upTon*100)};
+const wheelBg=deg=>`conic-gradient(from 0deg,#e8950c 0deg ${deg}deg,#2b1c10 ${deg}deg 360deg)`;
+function renderUp(){
+ if(P)upSel=new Set([...upSel].filter(id=>P.inv.some(i=>i.id==id)));
+ const v=upVal(),tg_=CAT.find(c=>c.id==upTarget),ok=v>=10&&tg_&&tg_.val>v,ch=ok?v/tg_.val*(1-UPFEE):0;
+ if(!upBusy){$('upw').style.transition='none';$('upw').style.transform='rotate(0deg)';$('upw').style.background=wheelBg(ch*360)}
+ $('upch').textContent=ok?(ch*100).toFixed(ch<.1?1:0)+'%':'';$('upchv').style.display=ok?'none':'block';$('upsm').textContent=ok?t('up_fee',{p:UPFEE*100}):'';
+ const cnt=upSel.size;
+ $('upd').innerHTML=v>0?`<span class="big">${cnt?'🎁':'💎'}</span><b>${f2(v)} TON</b>${cnt?`<span>${cnt} ×</span>`:''}`:`<span class="big">📦</span>${t('up_items')}`;
+ $('upt').innerHTML=tg_?`<span class="big">${esc(tg_.ico)}</span><b>${esc(tg_.name)}</b><span>${f2(tg_.val)} TON</span>`:`<span class="big">⭐</span>${t('up_target')}`;
+ const go_=$('upgo');go_.disabled=!ok||upBusy;go_.textContent=upBusy?t('up_busy'):t('up_go')}
+function openDonors(){if(upBusy)return;const inv=P?P.inv:[];
+ sheet(`<h3>${t('up_donor_h')}</h3>${inv.length?inv.map(i=>`<label class="pk"><input type="checkbox" data-id="${esc(i.id)}" ${upSel.has(i.id)?'checked':''}><span>${esc(i.ico)} ${esc(i.name)}</span><em>${f2(i.val)} TON</em></label>`).join(''):`<div class="empty">${t('no_inv')}</div>`}
+ <div style="font-size:13px;color:var(--mut);margin:8px 0 4px">${t('up_ton')}</div><input class="fi" id="upton" type="number" inputmode="decimal" step="0.1" min="0" value="${upTon||''}" placeholder="0.00">
+ <button class="ok" style="width:100%;padding:13px;margin-top:6px" data-act="updone">${t('up_done')}</button>`)}
+function openTargets(){if(upBusy)return;const v=upVal();
+ sheet(`<h3>${t('up_target_h')}</h3><div style="font-size:12px;color:var(--mut);margin-bottom:8px">${t('up_total')}: ${f2(v)} TON</div>`+CAT.map(c=>{const can=c.val>v&&v>=10,ch=can?c.val&&v/c.val*(1-UPFEE):0;
+  return `<button class="pk ${can?'':'dis'}" style="width:100%;text-align:left;color:var(--tx)" ${can?`data-act="uppick" data-id="${c.id}"`:'disabled'}><span>${esc(c.ico)} ${esc(c.name)}<br><small style="color:var(--mut)">${f2(c.val)} TON</small></span><em>${can?(ch*100).toFixed(ch<.1?1:0)+'%':t('up_need')}</em></button>`}).join(''))}
+function upSpin(m){upBusy=true;renderUp();const w=$('upw');w.style.transition='none';w.style.transform='rotate(0deg)';w.style.background=wheelBg(m.chance*360);
+ $('upch').textContent=(m.chance*100).toFixed(m.chance<.1?1:0)+'%';$('upchv').style.display='none';void w.offsetWidth;
+ w.style.transition=`transform ${m.ms-300}ms cubic-bezier(.12,.6,.1,1)`;w.style.transform=`rotate(${360*6-m.roll*360}deg)`}
+function upEnd(m){upBusy=false;upSel=new Set();upTon=0;renderUp();
+ sheet(m.ok?`<div class="res" style="color:var(--ok)"><div class="big">${esc(m.target.ico)}</div><h3>${t('up_win')}</h3><div style="color:var(--tx)">${t('up_got')}: <b>${esc(m.target.name)}</b> (${f2(m.target.val)} TON)</div></div>`
+  :`<div class="res" style="color:var(--bad)"><div class="big">💨</div><h3>${t('up_lose')}</h3><div style="color:var(--mut)">${t('up_lost')}</div></div>`)}
+
+// ---------- графика дуэли ----------
+const c=$('c'),g=c.getContext('2d');c.width=c.height=W*dpr;
+const parts=Array.from({length:60},()=>({x:Math.random()*W,y:Math.random()*W,v:.3+Math.random()*.9,r:.8+Math.random()*2}));
+function zig(x0){g.moveTo(x0,-4);for(let y=0,i=0;y<=W+8;y+=14,i++)g.lineTo(x0+(i%2?7:-7),y)}
+function draw(tm){
+ g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,W);bx+=(tbx-bx)*.08;
+ g.save();g.beginPath();g.arc(160,160,R,0,7);g.clip();
+ let a=g.createLinearGradient(0,0,0,W);a.addColorStop(0,'#04202f');a.addColorStop(1,'#37c8f0');g.fillStyle=a;g.fillRect(0,0,W,W);
+ for(let i=0;i<8;i++){const cx=15+i*45,h=45+(i*37%55);g.fillStyle='rgba(255,255,255,.2)';g.beginPath();g.moveTo(cx-13,W);g.lineTo(cx-2,W-h-18);g.lineTo(cx+13,W);g.fill();g.fillStyle='rgba(255,255,255,.12)';g.beginPath();g.moveTo(cx,W);g.lineTo(cx+8,W-h);g.lineTo(cx+22,W);g.fill()}
+ g.save();g.beginPath();zig(bx);g.lineTo(W+10,W+8);g.lineTo(W+10,-4);g.closePath();g.clip();
+ a=g.createLinearGradient(0,0,0,W);a.addColorStop(0,'#3a0d03');a.addColorStop(.6,'#c8420e');a.addColorStop(1,'#ffa530');g.fillStyle=a;g.fillRect(0,0,W,W);
+ for(let i=0;i<9;i++){const x=bx+14+i*((W-bx)/8),h=50+34*Math.sin(tm/230+i*1.7),s=7*Math.sin(tm/300+i);
+  const fg=g.createLinearGradient(0,W-h,0,W);fg.addColorStop(0,'rgba(255,230,120,.95)');fg.addColorStop(1,'rgba(255,90,20,.85)');g.fillStyle=fg;
+  g.beginPath();g.moveTo(x-17,W);g.quadraticCurveTo(x-8,W-h*.5,x+s,W-h);g.quadraticCurveTo(x+8,W-h*.5,x+17,W);g.fill()}
+ g.restore();
+ parts.forEach(p=>{const ice=p.x<bx;p.y+=ice?p.v:-p.v;if(p.y>W+4)p.y=-4;if(p.y<-4)p.y=W+4;
+  g.fillStyle=ice?'rgba(255,255,255,.75)':'rgba(255,190,70,.85)';g.beginPath();g.arc(p.x+(ice?0:Math.sin(tm/300+p.y/20)*3),p.y,p.r,0,7);g.fill()});
+ g.strokeStyle='#fff';g.lineWidth=3;g.shadowColor='#ffd9a0';g.shadowBlur=14;g.beginPath();zig(bx);g.stroke();g.shadowBlur=0;
+ const P_=pools(),tt=P_.i+P_.f;if(tt){g.font='800 24px Trebuchet MS,sans-serif';g.textAlign='center';g.fillStyle='#fff';g.shadowColor='#000';g.shadowBlur=6;
+  const s=P_.i/tt;if(s>.14)g.fillText(Math.round(s*100)+'%',(160-R+bx)/2,200);if(s<.86)g.fillText(Math.round((1-s)*100)+'%',(bx+160+R)/2,200);g.shadowBlur=0}
+ g.restore();
+ if(spin){const k=(performance.now()-spin.t0)/16.667,i=Math.min(Math.floor(k),spin.path.length-1),n=spin.path[Math.min(i+1,spin.path.length-1)],p0=spin.path[i],f=Math.min(k-i,1);
+  ball.x=p0[0]+(n[0]-p0[0])*f;ball.y=p0[1]+(n[1]-p0[1])*f}
+ trail.push([ball.x,ball.y]);if(trail.length>18)trail.shift();
+ trail.forEach((q,i)=>{g.globalAlpha=i/trail.length*.35;g.fillStyle='#ffd9a0';g.beginPath();g.arc(q[0],q[1],BR*i/trail.length,0,7);g.fill()});g.globalAlpha=1;
+ g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(ball.x+3,ball.y+BR+2,BR*.9,BR*.4,0,0,7);g.fill();
+ const rg_=g.createRadialGradient(ball.x-4,ball.y-4,1,ball.x,ball.y,BR);rg_.addColorStop(0,'#fff');rg_.addColorStop(1,'#d9d4cc');
+ g.shadowColor='#fff';g.shadowBlur=16;g.fillStyle=rg_;g.beginPath();g.arc(ball.x,ball.y,BR,0,7);g.fill();g.shadowBlur=0;
+ g.lineWidth=4;g.strokeStyle='#ff7a1a';g.shadowColor='#ff7a1a';g.shadowBlur=18;g.beginPath();g.arc(160,160,R+2,0,7);g.stroke();g.shadowBlur=0;
+ if(ws&&ws.readyState==1){
+  if(st.phase=='bet')$('st').textContent=t('st_bet')+' '+Math.max(0,Math.ceil((st.endsAt-Date.now())/1000))+' '+t('sec');
+  else if(st.phase=='spin')$('st').textContent=t('st_spin');
+  else if(lastWin)$('st').textContent=t('st_win')+' '+sideN(lastWin)}}
+function loop(tm){
+ if($('p-duel').classList.contains('on'))draw(tm);
+ if($('p-rk').classList.contains('on'))drawRk(tm);
+ requestAnimationFrame(loop)}
+applyLang();$('st').textContent=t('connecting');
+conn();requestAnimationFrame(loop);
+</script></body></html>
